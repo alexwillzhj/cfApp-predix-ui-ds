@@ -1,0 +1,14 @@
+{
+  "name": "object-assign",
+  "homepage": "https://github.com/sindresorhus/object-assign",
+  "version": "4.1.1",
+  "_release": "4.1.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "v4.1.1",
+    "commit": "a29ce5053398661d882e368e60da6553d3d82434"
+  },
+  "_source": "https://github.com/sindresorhus/object-assign.git",
+  "_target": "^4.1.1",
+  "_originalSource": "object-assign"
+}

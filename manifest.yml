@@ -1,0 +1,18 @@
+---
+applications:
+  - name: predix-ui-ds-demo
+    memory: 64M
+    buildpack: nodejs_buildpack
+    command: node server/app.js
+    path: dist
+services:
+  - timeseries-ds
+  - asset-ds 
+env:
+    node_env: cloud
+    uaa_service_label : predix-uaa
+    # Add these values for authentication in the cloud
+    clientId: ds_client1
+    base64ClientCredential: ZHNfY2xpZW50MTpkYXRh 
+    uaaURL: https://shfoundry.predix-uaa.run.aws-jp01-pr.ice.predix.io
+    #windServiceURL: "{URL of the microservice <your-name>-winddata-timeseries-service}, e.g.  https://your-name-winddata-timeseries-service.run.asw-usw02-pr.predix.io"

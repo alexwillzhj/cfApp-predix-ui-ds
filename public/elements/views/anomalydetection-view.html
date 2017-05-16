@@ -1,0 +1,183 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/px-card/px-card.html">
+<link rel="import" href="../../bower_components/px-vis-timeseries/px-vis-timeseries.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<script src="../../bower_components/axios/dist/axios.min.js"></script>
+ 
+<dom-module id="anomalydetection-view">
+  <template>
+    <style>
+      px-card {
+        position: relative;
+      }
+      img {
+        position: absolute;
+        right: 0;
+        top: 550px;
+        height: 300px;
+      }
+    </style>    
+ 
+    <px-card header-text="Anomaly Detection">
+ 
+      <px-vis-timeseries
+        width="1600"
+        height="800"
+        prevent-resize="false"
+        enable-tooltip="true"
+        register-location="none"
+        include-all-series
+        series-config='{"Time": {
+          "type":"line",
+          "x": "x",
+          "y": "y",
+          "yAxisUnit": "Usage",
+          "xAxisUnit": "Time"
+        }}'
+        selection-type="xy"
+        chart-data="[[tsChartData]]">
+      </px-vis-timeseries>
+
+  <!--   <img src="/assets/forecasting.png" alt=""> -->
+
+    </px-card>
+  </template>
+  <script>
+    Polymer({
+      is: 'anomalydetection-view',
+      properties: {
+        tsChartData: {
+          type: Array,
+          computed: '_getTsChartData(rawTsData)'
+        },
+        rawTsData: {
+          type: Object
+        },
+        yAxisList: {
+          type: Array,
+          value: ['Real Time Signal', 'Classification Results', '', '']
+        },
+        timeseriesQuery: {
+          type: Object,
+          value: function() {
+            return {
+              "start": "1h-ago",
+              "end": -1,
+              "tags": [
+                {
+                  "name": "ts_detection_feature0001",
+                  "order": "asc"
+                },
+                {
+                  "name": "ts_detection_res0001",
+                  "order": "asc"
+                }
+/*,
+		{
+                  "name": "forecast_power_data_0003",
+		  "order": "asc",
+                  "limit": 1420
+                },
+		{
+		  "name": "forecast_power_data_0004",
+                  "order": "asc",
+                  "limit": 1480
+                },
+
+                {
+                  "name": "forecast_power_data_0005",
+                  "order": "asc",
+                  "limit": 1540
+                }
+*/
+              ]
+            };
+          }
+        }
+      },
+/*
+      _formatDataForChart: function(raw) {
+        var series = [];
+        var datapoints = raw.tags[0].results[0].values; //|| raw.tags[0].results[0].datapoints || raw.tags[1].results[0].datapoints;
+        datapoints.forEach(function(point) {
+          series.push({x: point[0], y: point[1]});
+        });
+ 
+        this.tsChartData = series;
+      }
+*/
+
+      _getTsChartData: function(rawTsData) {
+        var series = [];
+        var _this = this;
+      
+        var datum = rawTsData.map(function(n, i) {
+          return n.reduce(function(prev, cur) {
+            var x = cur[0];
+            var y = cur[1];
+            var yAxis = _this.yAxisList[i] // 'y' + i;
+            prev[x] = {};
+            prev[x][yAxis] = y;
+            return prev
+          }, {});
+        });
+        var tmp = datum.reduce(function(prev, cur) {
+          Object.keys(cur).forEach(function(n) {
+            prev[n] = prev[n] ? prev[n] : {};
+            prev[n].x = n;
+            prev[n] = Object.assign(prev[n], cur[n]);
+          })
+          return prev;
+        }, {})
+        Object.keys(tmp).forEach(function(key) {
+          series.push(tmp[key]);
+        });
+        series = series.sort(function(a, b) {
+          return a.x - b.x;
+        });
+
+        return series;
+      },
+
+      _getEventData: function(rawTsData) {
+        var target = rawTsData.filter(function(n) {
+          return Array.isArray(n) && n.length
+        }).reduce(function(prev, cur, index) {
+          if (cur.length < prev.length) return cur
+          else return prev
+        })
+
+        var lastPoint = target[target.length - 1]
+
+        return [{
+          id: 1,
+          label: 'one',
+          time: lastPoint[0]
+        }]
+      },
+
+      loadData: function() {
+        return axios.post('/predix-api/predix-timeseries/v1/datapoints', this.timeseriesQuery)
+        .then((function(res) {
+          var data = res.data.tags
+          var rawTsData = data.map(function(n) {
+            return n.results[0].values || n.results[0].datapoints
+          })
+
+          this.rawTsData = rawTsData
+        }).bind(this))
+
+      },
+ 
+      ready: function() {
+        this.loadData()
+        .then((function() {
+          setInterval(this.loadData.bind(this), 10000)
+        }).bind(this))
+      }
+ 
+    });
+  </script>
+</dom-module>
+
+
